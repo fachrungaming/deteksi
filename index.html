@@ -12,6 +12,13 @@
         href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;500&display=swap"
         rel="stylesheet">
     <link rel="icon" href="data:,">
+    <link rel="manifest" href="manifest.json">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('sw.js')
+                .then(() => console.log('Service Worker Registered'));
+        }
+    </script>
     <style>
         :root {
             --primary-glow: rgba(0, 150, 255, 0.5);
