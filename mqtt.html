@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MQTT Alarm Client</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+</head>
+
+<body>
+    <div class="container mt-5">
+        <h1 class="text-center">MQTT Alarm Client</h1>
+        <div class="text-center mt-4">
+            <button id="playButton" class="btn btn-primary" onclick="playAudio()">Play Alarm</button>
+            <button id="stopButton" class="btn btn-danger" onclick="stopAudio()">Stop Alarm</button>
+
+        </div>
+        <div class="text-center mt-12">
+            <a href="/downloads" target="_blank" class="btn btn-info mt-3">Link Gambar</a>
+        </div>
+        <audio id="alarmAudio" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" loop></audio>
+    </div>
+
+    <script>
+        let mqttClient;
+        let lastMessage = "";
+        const mqttBroker = "broker.emqx.io";
+        const mqttTopic = "helm";
+        const messageInterval = 1000; // 5 seconds delay
+        let lastCapturedTimestamp = null;
+
+        // Initialize MQTT client
+        // Use WSS (port 8084) for secure connection (required for GitHub Pages/HTTPS)
+        mqttClient = mqtt.connect(`wss://${mqttBroker}:8084/mqtt`);
+
+        // Event handlers for MQTT client
+        mqttClient.on('connect', () => {
+            console.log('Connected to MQTT broker');
+            // Subscribe to the 'helm' topic
+            mqttClient.subscribe(mqttTopic, (err) => {
+                if (!err) {
+                    console.log(`Subscribed to topic: ${mqttTopic}`);
+                } else {
+                    console.error('Failed to subscribe to topic:', err);
+                }
+            });
+        });
+
+        mqttClient.on('message', (topic, message) => {
+            console.log(`Received message on topic ${topic}: ${message.toString()}`);
+            lastMessage = message.toString();
+            console.log(lastMessage);
+
+            var audio = document.getElementById("alarmAudio");
+            if (lastMessage === "Alarm Aktif") {
+                console.log("Playing alarm sound");
+                playAudio();
+            } else if (lastMessage === "Alarm Non Aktif") {
+                console.log("Stopping alarm sound");
+                stopAudio();
+            } else {
+                console.log("Unknown message received: " + message.payloadString);
+            }
+        });
+
+        mqttClient.on('error', (error) => {
+            console.error('MQTT error:', error);
+        });
+
+        mqttClient.on('close', () => {
+            console.log('Disconnected from MQTT broker');
+        });
+
+        mqttClient.on('reconnect', () => {
+            console.log('Reconnecting to MQTT broker...');
+        });
+
+        // Function to play audio
+        function playAudio() {
+            var audio = document.getElementById("alarmAudio");
+            audio.play().then(() => {
+                console.log("Audio played successfully");
+            }).catch(error => {
+                console.error("Error playing audio:", error);
+            });
+        }
+
+        // Function to stop audio
+        function stopAudio() {
+            var audio = document.getElementById("alarmAudio");
+            audio.pause();
+            audio.currentTime = 0; // Reset audio to the beginning
+            console.log("Audio stopped");
+        }
+    </script>
+</body>
+
+</html
