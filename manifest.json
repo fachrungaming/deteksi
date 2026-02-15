@@ -2,7 +2,7 @@
   "name": "IMIP Helmet Detection",
   "short_name": "IMIP Detect",
   "description": "Premium Helmet Detection System for IMIP",
-  "start_url": "./index.html",
+  "start_url": "/deteksi/index.html",
   "display": "standalone",
   "background_color": "#000000",
   "theme_color": "#ff6600",
