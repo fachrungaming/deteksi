@@ -1,0 +1,17 @@
+{
+  "name": "IMIP Helmet Detection",
+  "short_name": "IMIP Detect",
+  "description": "Premium Helmet Detection System for IMIP",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#000000",
+  "theme_color": "#ff6600",
+  "icons": [
+    {
+      "src": "https://cdn-icons-png.flaticon.com/512/1253/1253806.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
