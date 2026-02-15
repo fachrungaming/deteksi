@@ -453,7 +453,8 @@
             const statusText = document.getElementById("mqtt-status");
             const statusDot = document.getElementById("mqtt-dot");
 
-            mqttClient = mqtt.connect(`ws://${MQTT_BROKER}:8083/mqtt`);
+            // Use WSS (port 8084) for encrypted connection required by Netlify (HTTPS)
+            mqttClient = mqtt.connect(`wss://${MQTT_BROKER}:8084/mqtt`);
 
             mqttClient.on('connect', () => {
                 console.log('Connected to MQTT broker');
