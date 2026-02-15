@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IMIP - Helmet Detection System</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Google Fonts -->
+    <link
+        href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Roboto:wght@300;400;500&display=swap"
+        rel="stylesheet">
+    <link rel="icon" href="data:,">
+    <style>
+        :root {
+            --primary-glow: rgba(0, 150, 255, 0.5);
+            --secondary-glow: rgba(255, 100, 0, 0.5);
+            --danger-glow: rgba(255, 0, 0, 0.6);
+            --success-glow: rgba(0, 255, 100, 0.6);
+            --glass-bg: rgba(10, 10, 25, 0.7);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background: radial-gradient(circle at center, #1a1a2e 0%, #000 100%);
+            color: #e0e0e0;
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            overflow: hidden;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Ambient Background Effect */
+        body::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('https://www.transparenttextures.com/patterns/carbon-fibre.png');
+            opacity: 0.2;
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .dashboard {
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+            width: 100%;
+            height: 90vh;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+
+
+        /* Main Content Grid */
+        .main-panel {
+            background: var(--glass-bg);
+            backdrop-filter: blur(15px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+            flex-grow: 1;
+            display: grid;
+            grid-template-columns: 1.5fr 1fr;
+            gap: 30px;
+            align-items: center;
+        }
+
+        /* Left Side: Info & Controls */
+        .info-section {
+            text-align: center;
+        }
+
+        .info-section h2 {
+            font-family: 'Orbitron', sans-serif;
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: #fff;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+        }
+
+        .info-section p {
+            color: #ccc;
+            margin-bottom: 30px;
+            font-weight: 300;
+        }
+
+        .status-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 40px;
+            margin-bottom: 30px;
+        }
+
+        .status-item {
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #fff;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #00ff66;
+            box-shadow: 0 0 10px #00ff66;
+            animation: pulse-green 2s infinite;
+        }
+
+        @keyframes pulse-green {
+            0% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 106, 0.7);
+            }
+
+            70% {
+                box-shadow: 0 0 0 10px rgba(0, 255, 106, 0);
+            }
+
+            100% {
+                box-shadow: 0 0 0 0 rgba(0, 255, 106, 0);
+            }
+        }
+
+        /* Right Side: Camera Preview */
+        .camera-container {
+            position: relative;
+            background: #000;
+            border: 3px solid #333;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.8);
+            aspect-ratio: 4/3;
+        }
+
+        #webcam-container canvas {
+            width: 100% !important;
+            height: 100% !important;
+            object-fit: cover;
+        }
+
+        .prediction-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 10px;
+            text-align: center;
+            font-family: 'Orbitron', sans-serif;
+            font-weight: 700;
+            color: #fff;
+            border-top: 2px solid #555;
+        }
+
+        /* Bottom Section: Progress Bars */
+        .stats-section {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .stat-label {
+            font-size: 0.8rem;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            color: #aaa;
+        }
+
+        .stat-bar-container {
+            height: 10px;
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 5px;
+            overflow: hidden;
+        }
+
+        .stat-bar {
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
+        .bar-gray {
+            background: #666;
+            box-shadow: 0 0 5px #666;
+        }
+
+        .bar-red {
+            background: #ff4d4d;
+            box-shadow: 0 0 10px #ff4d4d;
+        }
+
+        .bar-green {
+            background: #00ff66;
+            box-shadow: 0 0 10px #00ff66;
+        }
+
+        /* Buttons */
+        .btn-custom {
+            font-family: 'Orbitron', sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            padding: 12px 25px;
+            border-radius: 10px;
+            border: none;
+            transition: all 0.3s ease;
+            font-weight: 600;
+        }
+
+        .btn-start {
+            background: linear-gradient(45deg, #00ff66, #0099ff);
+            color: #000;
+            margin-right: 15px;
+        }
+
+        .btn-start:hover {
+            box-shadow: 0 0 20px rgba(0, 255, 102, 0.6);
+            transform: scale(1.05);
+        }
+
+        .btn-capture {
+            background: transparent;
+            border: 1px solid #00ff66;
+            color: #00ff66;
+        }
+
+        .btn-capture:hover {
+            background: rgba(0, 255, 102, 0.1);
+        }
+
+        /* Alarm Indicator */
+        #alarm-badge {
+            display: none;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 0, 0, 0.8);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 30px;
+            font-weight: bold;
+            box-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+            animation: pulse-red 1s infinite;
+            z-index: 1000;
+        }
+
+        @keyframes pulse-red {
+            50% {
+                transform: scale(1.1);
+                opacity: 0.8;
+            }
+        }
+
+        /* Shutter Effect */
+        .shutter-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: white;
+            opacity: 0;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        .flash-active {
+            animation: flash-anim 0.3s ease-out;
+        }
+
+        @keyframes flash-anim {
+            0% {
+                opacity: 0.8;
+            }
+
+            100% {
+                opacity: 0;
+            }
+        }
+
+        #capture-notif {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0, 255, 106, 0.9);
+            color: black;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            display: none;
+            z-index: 11;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div id="alarm-badge">⚠️ ALARM AKTIF: HELM TIDAK TERDETEKSI ⚠️</div>
+
+    <div class="dashboard">
+
+
+        <main class="main-panel">
+            <div class="info-section">
+                <h2>SELAMAT DATANG</h2>
+                <p>Silahkan berdiri di depan kamera. Atur posisi Anda agar tampak di layar untuk verifikasi penggunaan
+                    helm proyek.</p>
+
+                <div class="status-indicators">
+                    <div class="status-item">
+                        <div class="status-dot" id="mqtt-dot"></div>
+                        MQTT: <span id="mqtt-status" style="color: #ff4d4d">DISCONNECTED</span>
+                    </div>
+                    <div class="status-item">
+                        <div class="status-dot"></div>
+                        CAMERA: <span style="color: #00ff66">ACTIVE</span>
+                    </div>
+                </div>
+
+                <div class="controls">
+                    <button class="btn btn-custom btn-start" onclick="init()">Start Camera</button>
+                    <button class="btn btn-custom btn-capture" onclick="captureImage()">Capture Image</button>
+                </div>
+            </div>
+
+            <div class="camera-panel">
+                <div class="camera-container">
+                    <div id="capture-notif">📷 IMAGE CAPTURED!</div>
+                    <div class="shutter-flash" id="flash-effect"></div>
+                    <div id="webcam-container"></div>
+                    <div class="prediction-overlay" id="prediction-result">WAITING FOR FEED...</div>
+                </div>
+            </div>
+        </main>
+
+        <section class="stats-section">
+            <div class="stat-card">
+                <div class="stat-label">
+                    <span>Tidak ada orang</span>
+                    <span id="label-no-person">0%</span>
+                </div>
+                <div class="stat-bar-container">
+                    <div class="stat-bar bar-gray" id="bar-no-person"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">
+                    <span>Tidak Mengenakan Helm</span>
+                    <span id="label-no-helmet">0%</span>
+                </div>
+                <div class="stat-bar-container">
+                    <div class="stat-bar bar-red" id="bar-no-helmet"></div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">
+                    <span>Mengenakan Helm</span>
+                    <span id="label-helmet">0%</span>
+                </div>
+                <div class="stat-bar-container">
+                    <div class="stat-bar bar-green" id="bar-helmet"></div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <!-- Hidden Audio for Alarm -->
+    <audio id="alarmAudio" src="https://assets.mixkit.co/active_storage/sfx/951/951-preview.mp3" loop></audio>
+
+    <!-- Dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@latest/dist/tf.min.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/npm/@teachablemachine/image@latest/dist/teachablemachine-image.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/mqtt/4.3.7/mqtt.min.js"></script>
+
+    <script type="text/javascript">
+        // Using the HELM folder for the model files
+        const MODEL_URL = "HELM/";
+        let model, webcam, maxPredictions;
+        let mqttClient;
+        let lastAlarmState = false;
+
+        const MQTT_BROKER = "broker.emqx.io";
+        const MQTT_TOPIC = "helm";
+
+        async function init() {
+            if (window.location.protocol === 'file:') {
+                alert("Peringatan: Aplikasi harus dijalankan melalui server (http://localhost:8080) agar model dapat dimuat. Silakan gunakan server yang sudah saya jalankan.");
+                return;
+            }
+
+            const cb = "?v=" + new Date().getTime();
+            const modelURL = MODEL_URL + "model.json" + cb;
+            const metadataURL = MODEL_URL + "metadata.json" + cb;
+            const weightsURL = MODEL_URL + "weights.bin" + cb;
+
+            console.log("Loading model from:", modelURL);
+            document.getElementById("prediction-result").innerText = "LOADING MODEL...";
+
+            try {
+                // Explicitly providing the weights URL can help fix loading issues
+                model = await tmImage.load(modelURL, metadataURL, weightsURL);
+                maxPredictions = model.getTotalClasses();
+                console.log("Model loaded, classes:", maxPredictions);
+
+                const flip = true;
+                webcam = new tmImage.Webcam(640, 480, flip);
+                await webcam.setup();
+                await webcam.play();
+                window.requestAnimationFrame(loop);
+
+                document.getElementById("webcam-container").innerHTML = "";
+                document.getElementById("webcam-container").appendChild(webcam.canvas);
+
+                // Initialize MQTT
+                initMQTT();
+
+                // Show status
+                console.log("System initialized successfully");
+            } catch (err) {
+                console.error("Initialization failed:", err);
+                alert("Gagal memuat kamera atau model. Pastikan file model ada di folder 'HELM/'.");
+            }
+        }
+
+        function initMQTT() {
+            const statusText = document.getElementById("mqtt-status");
+            const statusDot = document.getElementById("mqtt-dot");
+
+            mqttClient = mqtt.connect(`ws://${MQTT_BROKER}:8083/mqtt`);
+
+            mqttClient.on('connect', () => {
+                console.log('Connected to MQTT broker');
+                statusText.innerText = "CONNECTED";
+                statusText.style.color = "#00ff66";
+                statusDot.style.background = "#00ff66";
+                statusDot.style.boxShadow = "0 0 10px #00ff66";
+                mqttClient.subscribe(MQTT_TOPIC);
+            });
+
+            mqttClient.on('error', (err) => {
+                console.error('MQTT error:', err);
+                statusText.innerText = "ERROR";
+                statusText.style.color = "#ff4d4d";
+                statusDot.style.background = "#ff4d4d";
+                statusDot.style.boxShadow = "0 0 10px #ff4d4d";
+            });
+
+            mqttClient.on('close', () => {
+                statusText.innerText = "DISCONNECTED";
+                statusText.style.color = "#ff4d4d";
+                statusDot.style.background = "#ff4d4d";
+                statusDot.style.boxShadow = "0 0 10px #ff4d4d";
+            });
+        }
+
+        async function loop() {
+            webcam.update();
+            await predict();
+            window.requestAnimationFrame(loop);
+        }
+
+        async function predict() {
+            const prediction = await model.predict(webcam.canvas);
+
+            // Map predictions (Assuming index 0: No person, 1: No helmet, 2: Helmet)
+            // This order matches the GUI and HELM metadata.json logic
+            const probs = {
+                noPerson: (prediction[0].probability * 100).toFixed(0),
+                noHelmet: (prediction[1].probability * 100).toFixed(0),
+                helmet: (prediction[2].probability * 100).toFixed(0)
+            };
+
+            // Update UI Bars
+            updateStat('no-person', probs.noPerson);
+            updateStat('no-helmet', probs.noHelmet);
+            updateStat('helmet', probs.helmet);
+
+            // Detection Logic
+            let resultText = "WAITING...";
+            let currentAlarm = false;
+
+            if (probs.noPerson > 50) {
+                resultText = "TIDAK ADA ORANG";
+                currentAlarm = false;
+            } else if (probs.helmet > 50) {
+                resultText = "MENGENAKAN HELM";
+                currentAlarm = false;
+            } else if (probs.noHelmet > 50) {
+                resultText = "TIDAK MENGENAKAN HELM";
+                currentAlarm = true;
+            }
+
+            document.getElementById("prediction-result").innerText = resultText;
+
+            // Sync Alarm State
+            if (currentAlarm !== lastAlarmState) {
+                lastAlarmState = currentAlarm;
+                const msg = currentAlarm ? "Alarm Aktif" : "Alarm Non Aktif";
+                mqttClient.publish(MQTT_TOPIC, msg);
+
+                // Visual Indicator
+                document.getElementById("alarm-badge").style.display = currentAlarm ? "block" : "none";
+
+                // Audio Trigger
+                playAlarm(currentAlarm);
+
+                // Auto Capture on Violation
+                if (currentAlarm) {
+                    console.log("Violation detected! Capturing image...");
+                    captureImage();
+                }
+            }
+        }
+
+        function updateStat(id, value) {
+            document.getElementById(`label-${id}`).innerText = `${value}%`;
+            document.getElementById(`bar-${id}`).style.width = `${value}%`;
+        }
+
+        function playAlarm(active) {
+            const audio = document.getElementById("alarmAudio");
+            if (active) {
+                audio.play().catch(e => console.log("Audio play blocked until user interaction"));
+            } else {
+                audio.pause();
+                audio.currentTime = 0;
+            }
+        }
+
+        function captureImage() {
+            const canvas = webcam.canvas;
+            if (!canvas) return;
+
+            // Visual Shutter Effect
+            const flash = document.getElementById("flash-effect");
+            const notif = document.getElementById("capture-notif");
+
+            flash.classList.remove("flash-active");
+            void flash.offsetWidth; // trigger reflow
+            flash.classList.add("flash-active");
+
+            notif.style.display = "block";
+            setTimeout(() => { notif.style.display = "none"; }, 2000);
+
+            const dataURL = canvas.toDataURL('image/jpeg');
+            const link = document.createElement('a');
+            const ts = new Date().toLocaleTimeString().replace(/:/g, '-');
+            link.href = dataURL;
+            link.download = `VIOLATION_${ts}.jpg`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+
+</html>
