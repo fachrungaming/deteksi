@@ -5,3 +5,11 @@
   for = "/*"
   [headers.values]
     Access-Control-Allow-Origin = "*"
+    X-Frame-Options = "DENY"
+    X-XSS-Protection = "1; mode=block"
+
+[[headers]]
+  for = "/HELM/*"
+  [headers.values]
+    Content-Type = "application/json"
+    Cache-Control = "public, max-age=0, must-revalidate"
