@@ -8,9 +8,9 @@
   "theme_color": "#ff6600",
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/1253/1253806.png",
+      "src": "https://fonts.gstatic.com/s/i/short-term/release/googlesymbols/safety_check/default/512px.svg",
       "sizes": "512x512",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any maskable"
     }
   ]
